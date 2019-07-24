@@ -36,7 +36,6 @@ export default {
     latitude,
     longitude
   }) {
-    console.log('333',latitude);
     state.latitude = latitude;
     state.longitude = longitude;
   },

@@ -1,11 +1,13 @@
 <template>
-  <div class="shoplist_container" v-if="shopListArr.length">
-    <ul>
+  <div class="shoplist_container">
+    <ul v-if="shopListArr.length" type="1">
       <router-link to="#" tag="li" class="shop_li" v-for="(item,index) in shopListArr" :key="index">
-        <section><img src="" alt=""></section>
+        <section>
+          <img :src="imgBaseUrl+item.image_path" class="shop_img" />
+        </section>
         <hgroup class="shop_right">
           <header class="shop_detail_header">
-            <h4 class="shop_title ellipsis">{{item.name}}</h4>
+            <h4 class="shop_title ellipsis" :class="item.is_premium?'premium':''">{{item.name}}</h4>
             <ul class="shop_detail_ul">
               <li class="supports" v-for="i in item.supports" :key="i.id">{{i.icon_name}}</li>
             </ul>
@@ -13,7 +15,8 @@
           <h5 class="rating_order_num">
             <section class="rating_order_num_left">
               <div class="rating_section">
-                <span>{{item.rating}}</span>
+                <rating-star :rating="item.rating"></rating-star>
+                <span class="rating_num">{{item.rating}}</span>
               </div>
               <div class="order_section">月售{{item.recent_order_num}}单</div>
             </section>
@@ -23,18 +26,43 @@
             </section>
           </h5>
           <h5 class="fee_distance">
-            <p></p>
+            <p class="fee">
+              ￥{{item.float_minimum_order_amount}}起送
+              <span class="segmentation">/</span>
+              {{item.piecewise_agent_fee.tips}}
+            </p>
+            <p class="distance_time">
+              <span>{{item.distance}}</span>
+              <span class="segmentation">/</span>
+              <span class="order_time">{{item.order_lead_time}}</span>
+            </p>
           </h5>
         </hgroup>
       </router-link>
     </ul>
+    <ul v-else class="animation_opactiy">
+      <li class="list_back_li">
+        <img src="../../images/shopback.svg" class="list_back_svg" alt="">
+      </li>
+    </ul>
+    <p v-if="touchend" class="enpty_data">没有更多了</p>
+    <aside class="return_top" @click="backTop" v-if="showBackStatus">
+      <svg class="back_top_svg">
+				<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#backtop"></use>
+			</svg>
+    </aside>
+    <transition name="loading">
+      <loading v-show="showLoading"></loading>
+    </transition>
   </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
-import {imgBaseUrl} from '../../config/env'
+import { imgBaseUrl } from "../../config/env";
 import toast from "../../components/toast";
+import ratingStar from './ratingStar';
+import loading from './loading';
 import { getShopList } from "../../api/index";
 export default {
   data() {
@@ -45,20 +73,20 @@ export default {
       showBackStatus: true, //显示返回顶部按钮
       showLoading: true, //显示加载动画
       touchend: false, //没有更多数据
-      imgBaseUrl: ""
+      imgBaseUrl
     };
   },
-  props: ["geohash","restaurantCategoryId"],
-  components: {},
+  props: ["geohash", "restaurantCategoryId"],
+  components: {ratingStar,loading},
 
   computed: {
     ...mapState(["latitude", "longitude"])
   },
 
-  created() {},
+  created() {
+  },
 
   mounted() {
-    console.log(this.latitude);
     this.initData();
   },
 
@@ -80,9 +108,150 @@ export default {
 
     hideLoading() {
       this.showLoading = false;
-    }
+    },
+
+    backTop(){
+
+    },
+
   }
 };
 </script>
 <style lang='scss' scoped>
+@import "../../style/mixin";
+.shoplist_container{
+ background-color: #ffffff;
+ margin-bottom: 94px;
+ overflow: hidden;
+ ul{
+   .shop_li{
+    display: flex;
+    border-bottom: 1px solid $bc;/*no*/
+    padding: 32px 18px;
+    .shop_img{
+      @include wh(127px,127px);
+      display: inline-block;
+      flex-shrink: 0;
+      margin-right: 18px;
+    }
+    .shop_right{
+      flex: 1;
+      .shop_detail_header{
+        @include fj;
+        align-items: center;
+        .shop_title{
+          width: 400px;
+          color: #333;
+          @include font(30px,30px);
+          font-weight: 700;
+        }
+        .premium::before{
+          content:'品牌';
+          display: inline-block;
+          font-size: 24px;
+          line-height: 28px;
+          color: #333;
+          background: #ffd930;
+          padding: 0 5px;
+          border-radius: 5px;
+          margin-right: 8px;
+        }
+        .shop_detail_ul{
+          display: flex;
+          transform: scale(.8);
+          margin-right: -14px;
+          .supports{
+            @include sc(23px,#999);
+            border:1px solid #f1f1f1;/*no*/
+            padding: 0 3px;
+            border-radius: 8px;
+            margin-left: 2px;
+          }
+        }
+      }
+      .rating_order_num{
+        @include fj;
+        height: 28px;
+        margin-top: 24px;
+        .rating_order_num_left{
+          @include fj(flex-start);
+          .rating_section{
+            .rating_num{
+              @include sc(18px,#ff6000);
+              margin:0 10px;
+            }
+          }
+          .order_section{
+            transform: scale(.8);
+            margin-left: -10px;
+            @include sc(18px,#666);
+          }
+        }
+        .rating_order_num_right{
+          display: flex;
+          align-items: center;
+          transform: scale(.7);
+          min-width: 235px;
+          justify-content: flex-end;
+          margin-right: -37.5px;
+          .delivery_style{
+            font-size: 18px;
+            padding: 2px 4px 0;
+            margin-left: 4px;
+          }
+          .delivery_left{
+            color: #fff;
+            background-color: $blue;
+            border: 1px solid $blue;/*no*/
+          }
+          .delivery_right{
+            color: $blue;
+            border: 1px solid $blue;/*no*/
+          }
+        }
+      }
+      .fee_distance{
+        @include fj;
+        @include sc(23px,#333);
+        margin-top: 24px;
+        .fee{
+          transform: scale(0.9);
+          @include sc(24px,#666)
+        }
+        .distance_time{
+          transform: scale(0.9);
+          span{
+            color: #999;
+          }
+          .order_time{
+            color:$blue;
+          }
+          .segmentation{
+            color: #ccc;
+          }
+        }
+      }
+    }
+   }
+   .list_back_li{
+     height: 210px;
+     .list_back_svg{
+       @include wh(100%,100%)
+     }
+   }
+ }
+ .enpty_data{
+   @include sc(23px,#666);
+   text-align: center;
+   line-height: 94px;
+ }
+ .return_top{
+   position: fixed;
+   bottom: 140px;
+   right: 47px;
+   .back_top_svg{
+     @include wh(94px,94px)
+   }
+ }
+}
 </style>
