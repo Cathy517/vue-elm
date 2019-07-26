@@ -41,6 +41,7 @@
       </header>
       <shop-list v-if="hasGetData" :geohash="geohash"></shop-list>
     </div>
+    <foot-guide></foot-guide>
   </div>
 </template>
 
@@ -55,6 +56,7 @@ import {
 } from "../../api/index";
 import headTop from "../../components/header/index";
 import shopList from "../../components/common/shoplist";
+import footGuide from '../../components/footer/footGuide'
 export default {
   data() {
     return {
@@ -68,7 +70,8 @@ export default {
 
   components: {
     headTop,
-    shopList
+    shopList,
+    footGuide
   },
 
   computed: {},

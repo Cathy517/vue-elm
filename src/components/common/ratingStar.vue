@@ -26,18 +26,6 @@ export default {
   data() {
     return {};
   },
-
-  components: {},
-
-  computed: {},
-
-  created() {
-    console.log("22222", this.rating);
-  },
-
-  mounted() {},
-
-  methods: {}
 };
 </script>
 <style lang='scss' scoped>
