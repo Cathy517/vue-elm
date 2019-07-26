@@ -90,7 +90,7 @@ export function getMsiteFoodTypes(geohash) {
 }
 
 /**
- * 获取商铺列表
+ * 获取msite商铺列表
  */
 export function getShopList(latitude, longitude, offset, restaurant_category_id = '', order_by = '', delivery_mode = [], support_ids = [], restaurant_category_ids = '' ) {
   return axios({
@@ -107,5 +107,55 @@ export function getShopList(latitude, longitude, offset, restaurant_category_id 
       support_ids,
       restaurant_category_ids
     }
+  })
+}
+
+
+
+//获取shop页面商铺详情
+export function getShopDetails(shopid){
+  return axios({
+    method:'get',
+    url:`/api/shopping/restaurant/${shopid}`,
+  })
+}
+
+//获取shop页面菜单列表
+export function getFoodMenu(restaurant_id){
+  return axios({
+    method:'get',
+    url:`/api/shopping/v2/menu`,
+    params:{
+      restaurant_id
+    }
+  })
+}
+
+// 获取商铺评价列表
+export function getRatingList(restaurant_id,tag_name,offset,limit){
+  return axios({
+    method:'get',
+    url:`/api/ugc/v2/restaurants/${restaurant_id}/ratings`,
+    params:{
+      tag_name,
+      offset,
+      limit:10
+    }
+  })
+}
+
+// 获取商铺评价分数
+export function getRatingScores(restaurant_id){
+  return axios({
+    method:'get',
+    url:`/api/ugc/v2/restaurants/${restaurant_id}/ratings/scores`,
+  })
+}
+
+// 获取商铺评价分类
+export function getRatingTags(restaurant_id){
+  return axios({
+    method:'get',
+    url:`/api/ugc/v2/restaurants/${restaurant_id}/ratings/tags`,
   })
 }
