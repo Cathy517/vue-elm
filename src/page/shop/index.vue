@@ -143,6 +143,7 @@
                         <span>{{foods.specfoods[0].price}}</span>
                         <span v-if="foods.specifications.length">起</span>
                       </section>
+                      
                     </footer>
                   </section>
                 </li>
@@ -203,7 +204,7 @@
       </transition>
       <!-- 评价 -->
       <transition>
-        test
+        
       </transition>
 
     </section>
