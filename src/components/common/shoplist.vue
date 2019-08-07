@@ -61,8 +61,8 @@
 import { mapState } from "vuex";
 import { imgBaseUrl } from "../../config/env";
 import toast from "../../components/toast";
-import ratingStar from "./ratingStar";
 import loading from "./loading";
+import ratingStar from "./ratingStar";
 import { getShopList } from "../../api/index";
 import { showBack, animate } from "../../config/mUtils";
 import { loadMore, getImgPath } from "./mixin";
