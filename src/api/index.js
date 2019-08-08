@@ -159,3 +159,51 @@ export function getRatingTags(restaurant_id){
     url:`/api/ugc/v2/restaurants/${restaurant_id}/ratings/tags`,
   })
 }
+
+
+
+
+// 获取短信验证码
+export function getMobileCode(phone){
+  return axios({
+    method:'POST',
+    url:`/api/v4/mobile/verify_code/send`,
+    data:{
+      mobile:phone,
+      scene:'login',
+      type:'sms'
+    }
+  })
+}
+
+// 获取图片验证码
+export function getCaptchas(){
+  return axios({
+    method:'POST',
+    url:`/api/v1/captchas`
+  })
+}
+
+// 检测账号是否存在
+export function checkExsis(checkNumber,type){
+  return axios({
+    method:'get',
+    
+  })
+}
+
+// 发送账号
+export function sendMobile(sendData,captcha_code,type,password){
+  return axios({
+    method:'POST',
+    url:`/api/v1/mobile/verify_code/send`,
+    data:{
+      action:'send',
+      captcha_code,
+      [type]:sendData,
+      type:'sms',
+      way:type,
+      password
+    }
+  })
+}
