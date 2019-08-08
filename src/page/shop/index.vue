@@ -1,5 +1,6 @@
 <template>
   <div class="shop_wrap">
+    <!-- 商品内容和评价 -->
     <section v-if="!showLoading" class="shop_container">
       <nav class="goback">
         <svg width="4rem" height="100%" xmlns="http://www.w3.org/2000/svg" version="1.1">
@@ -87,10 +88,19 @@
             <!-- 菜单左侧 -->
             <section class="menu_left" id="wrapper_menu" ref="wrapperMenu">
               <ul>
-                <li v-for="(item,index) in menuList" :key="index" class="menu_left_li">
+                <li
+                  v-for="(item,index) in menuList"
+                  :key="index"
+                  class="menu_left_li"
+                  :class="{activity_menu:index==menuIndex}"
+                  @click="chooseMenu(index)"
+                >
                   <img :src="getImgPath(item.icon_url)" alt />
                   <span>{{item.name}}</span>
-                  <span class="category_num">1</span>
+                  <span
+                    class="category_num"
+                    v-if="categoryNum[index]&&item.type==1"
+                  >{{categoryNum[index]}}</span>
                 </li>
               </ul>
             </section>
@@ -98,6 +108,7 @@
             <section class="menu_right" ref="menuFoodList">
               <ul>
                 <li v-for="(item,index) in menuList" :key="index">
+                  <!-- 分类标题 -->
                   <header class="menu_detail_header">
                     <section class="menu_detail_header_left">
                       <strong class="menu_item_title">{{item.name}}</strong>
@@ -109,6 +120,7 @@
                       {{item.description}}
                     </p>
                   </header>
+                  <!-- 每一类的内容 -->
                   <section
                     v-for="(foods,foodindex) in item.foods"
                     :key="foodindex"
@@ -169,11 +181,11 @@
           <!-- 底部购物车 -->
           <section class="buy_cart_container">
             <!-- 购物车商品数量 -->
-            <section class="cart_icon_num">
+            <section class="cart_icon_num" @click="toggleCartList">
               <div
                 class="cart_icon_container"
                 ref="cartContainer"
-                :class="{cart_icon_activity:totalPrice>0}"
+                :class="{cart_icon_activity : totalPrice > 0}"
               >
                 <span v-if="totalNum" class="cart_list_length">{{totalNum}}</span>
                 <svg class="cart_icon">
@@ -221,19 +233,88 @@
                       <span>￥</span>
                       <span>{{item.price}}</span>
                     </div>
+                    <!-- 购物车列表加减 -->
                     <section class="cart_list_control">
-                      <span></span>
+                      <span
+                        @click="removeOutCart(item.category_id,item.item_id,item.food_id,item.name,item.price,item.specs)"
+                      >
+                        <svg>
+                          <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#cart-minus" />
+                        </svg>
+                      </span>
+                      <span class="cart_num">{{item.num}}</span>
+                      <svg
+                        class="cart_add"
+                        @click="addToCart(item.category_id,item.item_id,item.food_id,item.name,item.price,item.specs)"
+                      >
+                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#cart-add" />
+                      </svg>
                     </section>
                   </li>
                 </ul>
               </section>
             </section>
           </transition>
+          <transition name="fade">
+            <div
+              class="screen_cover"
+              v-show="showCartList&&cartFoodList.length"
+              @click="toggleCartList"
+            ></div>
+          </transition>
         </section>
       </transition>
       <!-- 评价 -->
       <transition></transition>
     </section>
+    <!-- 选规格弹窗 -->
+    <section class="specs_container">
+      <transition name="fade">
+        <div class="specs_cover" @click="showChooseList" v-if="showSpecs"></div>
+      </transition>
+      <transition name="fadeBounce">
+        <div class="specs_list" v-if="showSpecs">
+          <header class="specs_list_header">
+            <h4 class="ellipsis">{{choosedFoods.name}}</h4>
+            <svg
+              width="16"
+              height="16"
+              xmlns="http://www.w3.org/2000/svg"
+              version="1.1"
+              class="specs_cancel"
+              @click="showChooseList"
+            >
+              <line x1="0" y1="0" x2="16" y2="16" stroke="#666" stroke-width="1.2" />
+              <line x1="0" y1="16" x2="16" y2="0" stroke="#666" stroke-width="1.2" />
+            </svg>
+          </header>
+          <section class="specs_details">
+            <h5 class="specs_details_title">{{choosedFoods.specifications[0].name}}</h5>
+            <ul>
+              <li
+                v-for="(item,itemIndex) in choosedFoods.specifications[0].values"
+                :key="itemIndex"
+                :class="{specs_activity:itemIndex===specsIndex}"
+                @click="chooseSpecs(itemIndex)"
+              >{{item}}</li>
+            </ul>
+          </section>
+          <footer class="specs_footer">
+            <div class="specs_price">
+              <span>￥</span>
+              <span>{{choosedFoods.specfoods[specsIndex].price}}</span>
+            </div>
+            <div
+              class="specs_addoto_cart"
+              @click="addSpecs(choosedFoods.category_id, choosedFoods.item_id, choosedFoods.specfoods[specsIndex].food_id, choosedFoods.specfoods[specsIndex].name, choosedFoods.specfoods[specsIndex].price, choosedFoods.specifications[0].values[specsIndex], choosedFoods.specfoods[specsIndex].packing_fee, choosedFoods.specfoods[specsIndex].sku_id, choosedFoods.specfoods[specsIndex].stock)"
+            >加入购物车</div>
+          </footer>
+        </div>
+      </transition>
+    </section>
+    <transition name="fade">
+      <p class="show_delete_tip" v-if="showDeleteTip">多规格商品只能去购物车删除哦</p>
+    </transition>
   </div>
 </template>
 
@@ -273,6 +354,16 @@ export default {
       showCartList: false, //显示购物车列表
       receiveInCart: false, //购物车组件下落的圆点是否到达目标位置
 
+      ratingList: null, //评价列表
+      ratingOffset: 0, //评价获取数据offset值
+      ratingScoresData: null, //评价总体分数
+      ratingTagsList: null, //评价分类列表
+      ratingTageIndex: 0, //评价分类索引
+      preventRepeatRequest: false, // 防止多次触发数据请求
+      ratingTagName: "", //评论的类型
+      loadRatings: false, //加载更多评论是显示加载组件
+
+      foodScroll: null, //食品列表scroll
       showSpecs: false, //控制显示食品规格
       specsIndex: 0, //当前选中的规格索引值
       choosedFoods: null, //当前选中规格数据
@@ -333,6 +424,7 @@ export default {
     showLoading(value) {
       if (!value) {
         this.$nextTick(() => {
+          this.getFoodListHeight();
           this.initCategoryNum();
         });
       }
@@ -357,10 +449,66 @@ export default {
   },
 
   methods: {
+    ...mapMutations(["ADD_CART", "REDUCE_CART"]),
+
     async initData() {
-      this.shopDetailData = await getShopDetails(this.shopId);
-      this.menuList = await getFoodMenu(this.shopId);
+      this.shopDetailData = await getShopDetails(this.shopId); // 获取商铺信息
+      this.menuList = await getFoodMenu(this.shopId); //获取商铺食品列表
       this.hideLoading();
+    },
+
+    //获取食品列表的高度，存入shopListTop
+    getFoodListHeight() {
+      const listContainer = this.$refs.menuFoodList;
+      console.log(listContainer)
+      if (listContainer) {
+        const listArr = Array.from(listContainer.children[0].children);
+        console.log(listArr)
+        listArr.forEach((item, index) => {
+          this.shopListTop[index] = item.offsetTop;
+        });
+        // this.listenScroll(listContainer)
+      }
+    },
+
+    // 点击左侧食品列表标题，相应列表移动到最顶层
+    chooseMenu(index) {
+      this.menuIndex = index;
+      // menuIndexChange解决运动时listenScroll依然监听的bug
+      this.menuIndexChange = false;
+      this.foodScroll.scrollTo(0, -this.shopListTop[index], 400);
+      this.foodScroll.on("scrollEnd", () => {
+        this.menuIndexChange = true;
+      });
+    },
+
+    showTitleDetail(index) {
+      this.titleDetailIndex = this.titleDetailIndex == index ? null : index;
+    },
+
+    //加入购物车，所需7个参数，商铺id，食品分类id，食品id，食品规格id，食品名字，食品价格，食品规格
+    addToCart(category_id, item_id, food_id, name, price, specs) {
+      this.ADD_CART({
+        shopid: this.shopId,
+        category_id,
+        item_id,
+        food_id,
+        name,
+        price,
+        specs
+      });
+    },
+    //移出购物车，所需7个参数，商铺id，食品分类id，食品id，食品规格id，食品名字，食品价格，食品规格
+    removeOutCart(category_id, item_id, food_id, name, price, specs) {
+      this.REDUCE_CART({
+        shopid: this.shopId,
+        category_id,
+        item_id,
+        food_id,
+        name,
+        price,
+        specs
+      });
     },
 
     //初始化和shopCart变化时，重新获取购物车改变过的数据，赋值categoryNum,totalPrice,cartFoodList,整个数据流是自上而下的形式，所有的购物车数据都交给vuex统一管理，包括购物车组件中自身的商品数量，使整个数据流更加清晰
@@ -371,24 +519,52 @@ export default {
       this.cartFoodList = [];
       this.menuList.forEach((item, index) => {
         if (this.shopCart && this.shopCart[item.foods[0].category_id]) {
+          //category_id 分类id
+          console.log(this.shopCart[item.foods[0].category_id]);
           let num = 0;
           Object.keys(this.shopCart[item.foods[0].category_id]).forEach(
             itemid => {
+              //itemid foods的item_id
               Object.keys(
                 this.shopCart[item.foods[0].category_id][itemid]
               ).forEach(foodid => {
+                //foodid 食物id
                 let foodItem = this.shopCart[item.foods[0].category_id][itemid][
                   foodid
                 ];
                 num += foodItem.num;
                 if (item.type == 1) {
-                  
+                  this.totalPrice += foodItem.num * foodItem.price;
+                  if (foodItem.num > 0) {
+                    this.cartFoodList[cartFoodNum] = {};
+                    this.cartFoodList[cartFoodNum].category_id =
+                      item.foods[0].category_id;
+                    this.cartFoodList[cartFoodNum].item_id = itemid;
+                    this.cartFoodList[cartFoodNum].food_id = foodid;
+                    this.cartFoodList[cartFoodNum].num = foodItem.num;
+                    this.cartFoodList[cartFoodNum].price = foodItem.price;
+                    this.cartFoodList[cartFoodNum].name = foodItem.name;
+                    this.cartFoodList[cartFoodNum].specs = foodItem.specs;
+                    cartFoodNum++;
+                  }
                 }
               });
             }
           );
+          newArr[index] = num;
+        } else {
+          newArr[index] = 0;
         }
       });
+      this.totalPrice = this.totalPrice.toFixed(2);
+      this.categoryNum = [...newArr];
+    },
+
+    // 控制购物列表是否显示
+    toggleCartList() {
+      this.cartFoodList.length
+        ? (this.showCartList = !this.showCartList)
+        : true;
     },
 
     clearCart() {},
@@ -412,6 +588,33 @@ export default {
       this.specsIndex = index;
     },
 
+    //多规格商品加入购物车
+    addSpecs(
+      category_id,
+      item_id,
+      food_id,
+      name,
+      price,
+      specs,
+      packing_fee,
+      sku_id,
+      stock
+    ) {
+      this.ADD_CART({
+        shopid: this.shopId,
+        category_id,
+        item_id,
+        food_id,
+        name,
+        price,
+        specs,
+        packing_fee,
+        sku_id,
+        stock
+      });
+      this.showChooseList();
+    },
+
     //显示提示，无法减去商品
     showReduceTip() {
       this.showDeleteTip = true;
@@ -427,10 +630,6 @@ export default {
       this.showMoveDot = [...this.showMoveDot, ...showMoveDot];
       this.elLeft = elLeft;
       this.elBottom = elBottom;
-    },
-
-    showTitleDetail(index) {
-      this.titleDetailIndex = this.titleDetailIndex == index ? null : index;
     }
   }
 };
@@ -882,6 +1081,166 @@ export default {
         @include sc(28px, #666);
       }
     }
+    .cart_food_details {
+      background-color: #fff;
+      max-height: 938px;
+      overflow: auto;
+      .cart_food_li {
+        @include fj;
+        padding: 28px 24px;
+        .cart_list_num {
+          width: 55%;
+          p:nth-of-type(1) {
+            @include sc(32px, #666);
+            font-weight: bold;
+          }
+          p:nth-of-type(2) {
+            @include sc(18px, #666);
+          }
+        }
+        .cart_list_price {
+          font-size: 0;
+          span:nth-of-type(1) {
+            @include sc(26px, #f60);
+          }
+          span:nth-of-type(2) {
+            @include sc(32px, #f60);
+            font-weight: bold;
+          }
+        }
+        .cart_list_control {
+          display: flex;
+          align-items: center;
+          span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          svg {
+            @include wh(42px, 42px);
+            fill: #3190e8;
+          }
+          .specs_reduce_icon {
+            fill: #999;
+          }
+          .cart_num {
+            @include sc(30px, #666);
+            min-width: 47px;
+            text-align: center;
+          }
+        }
+      }
+    }
   }
+  .screen_cover {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 11;
+  }
+}
+.specs_container {
+  .specs_cover {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 17;
+  }
+  .specs_list {
+    position: fixed;
+    top: 35%;
+    left: 15%;
+    width: 70%;
+    background-color: #fff;
+    z-index: 18;
+    border: 1px; /*no*/
+    border-radius: 0.2rem;
+    .specs_list_header {
+      h4 {
+        @include sc(32px, #222);
+        font-weight: normal;
+        text-align: center;
+        padding: 23px;
+      }
+      .specs_cancel {
+        position: absolute;
+        right: 23px;
+        top: 23px;
+      }
+    }
+    .specs_details {
+      padding: 23px;
+      .shop_detail_header {
+        @include sc(28px, #666);
+      }
+      ul {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 18px 0;
+        li {
+          font-size: 28px;
+          padding: 14px 24px;
+          border: 1px solid #ddd; /*no*/
+          border-radius: 9px;
+          margin-right: 24px;
+          margin-bottom: 9px;
+        }
+        .specs_activity {
+          border-color: #3190e8;
+          color: #3190e8;
+        }
+      }
+    }
+    .specs_footer {
+      @include fj;
+      align-items: center;
+      background-color: #f9f9f9;
+      padding: 24px;
+      border: 1px; /*no*/
+      border-bottom-left-radius: 9px;
+      border-bottom-right-radius: 9px;
+      .specs_price {
+        span {
+          color: #ff6000;
+        }
+        span:nth-of-type(1) {
+          font-size: 24px;
+        }
+        span:nth-of-type(2) {
+          font-size: 37.5px;
+          font-weight: bolder;
+        }
+      }
+      .specs_addoto_cart {
+        @include wh(187px, 60px);
+        background-color: #3190e8;
+        border: 1px; /*no*/
+        border-radius: 7px;
+        @include sc(28px, #fff);
+        text-align: center;
+        line-height: 60px;
+      }
+    }
+  }
+}
+.show_delete_tip {
+  position: fixed;
+  top: 50%;
+  left: 15%;
+  width: 70%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 18;
+  @include sc(30px, #fff);
+  text-align: center;
+  padding: 24px 0;
+  border: 1px; /*no*/
+  border-radius: 12px;
 }
 </style>

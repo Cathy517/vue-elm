@@ -32,7 +32,7 @@
         <transition name="fade">
           <span class="cart_num" v-if="foodNum">{{foodNum}}</span>
         </transition>
-        <span class="show_chooselist" @click="showChooseList()">选规格</span>
+        <span class="show_chooselist" @click="showChooseList(foods)">选规格</span>
       </section>
     </section>
   </section>
@@ -151,7 +151,7 @@ export default {
 .cart_module {
   .add_icon {
     position: relative;
-    z-index: 12;
+    z-index: 11;
   }
   .cart_button {
     display: flex;
