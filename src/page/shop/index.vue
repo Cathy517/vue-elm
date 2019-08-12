@@ -1,7 +1,7 @@
 <template>
   <div class="shop_wrap">
     <!-- 商品内容和评价 -->
-    <section v-if="!showLoading" class="shop_container">
+    <section v-if="!showLoading" class="shop_container" :class="{shop_container_fixed:is_fixed}">
       <nav class="goback">
         <svg width="4rem" height="100%" xmlns="http://www.w3.org/2000/svg" version="1.1">
           <polyline
@@ -11,7 +11,7 @@
         </svg>
       </nav>
       <!-- 商家顶部信息 -->
-      <header class="shop_detail_header" ref="shopheader">
+      <header class="shop_detail_header" ref="shopHeader" :style="{zIndex:showActivities?'14':'10'}">
         <img :src="imgBaseUrl+shopDetailData.image_path" class="header_cover_img" alt />
         <section class="description_header">
           <router-link to="shop/shopDeatil" class="description_top">
@@ -35,6 +35,16 @@
               <path d="M0 0 L8 7 L0 14" stroke="#fff" stroke-width="1" fill="none" />
             </svg>
           </router-link>
+          <footer class="description_footer" v-if="shopDetailData.activities.length" @click="showActivitiesFun">
+            <p class="ellipsis">
+              <span class="tip_icon" :style="{backgroundColor: '#' + shopDetailData.activities[0].icon_color, borderColor: '#' + shopDetailData.activities[0].icon_color}">{{shopDetailData.activities[0].icon_name}}</span>
+              <span>{{shopDetailData.activities[0].description}}(App专享)</span>
+            </p>
+            <p>{{shopDetailData.activities.length}}个活动</p>
+            <svg class="footer_arrow">
+                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#arrow-left"></use>
+            </svg>
+          </footer>
         </section>
       </header>
       <!-- 活动详情蒙层 -->
@@ -72,12 +82,15 @@
         </section>
       </transition>
       <!-- tab切换 -->
-      <section class="change_show_type" ref="chooseType">
+      <section class="change_show_type" ref="chooseType" :class="{fixed_tab:is_fixed}">
         <div>
-          <span :class="{activity_show:changeShowType=='food'}">商品</span>
+          <span :class="{activity_show:changeShowType=='food'}" @click="changeShowType='food'">商品</span>
         </div>
         <div>
-          <span :class="{activity_show:changeShowType=='rating'}">评价</span>
+          <span
+            :class="{activity_show:changeShowType=='rating'}"
+            @click="changeShowType='rating'"
+          >评价</span>
         </div>
       </section>
       <!-- 商品 -->
@@ -135,6 +148,7 @@
                           <strong class="description_foodname">{{foods.name}}</strong>
                           <ul v-if="foods.attributes.length" class="attributes_ul">
                             <li
+                              v-if="attribute"
                               v-for="(attribute,foodindex) in foods.attributes"
                               :key="foodindex"
                               :style="{color:'#'+attribute.icon_color,borderColor:'#'+attribute.icon_color}"
@@ -265,7 +279,77 @@
         </section>
       </transition>
       <!-- 评价 -->
-      <transition></transition>
+      <transition name="fade-choose">
+        <section class="rating_container" id="ratingContainer" v-show="changeShowType=='rating'">
+          <section type="2">
+            <section>
+              <!-- 评价顶部 -->
+              <header class="rating_header">
+                <section class="rating_header_left">
+                  <p>{{shopDetailData.rating}}</p>
+                  <p>综合评价</p>
+                  <p>高于周边商家{{(ratingScoresData.compare_rating*100).toFixed(1)}}%</p>
+                </section>
+                <section class="rating_header_right">
+                  <p>
+                    <span>服务态度</span>
+                    <rating-star class="rating_star" :rating="ratingScoresData.service_score"></rating-star>
+                    <span class="rating_num">{{ratingScoresData.service_score.toFixed(1)}}</span>
+                  </p>
+                  <p>
+                    <span>菜品评价</span>
+                    <rating-star class="rating_star" :rating="ratingScoresData.food_score"></rating-star>
+                    <span class="rating_num">{{ratingScoresData.food_score.toFixed(1)}}</span>
+                  </p>
+                  <p>
+                    <span>送达时间</span>
+                    <span class="delivery_time">{{shopDetailData.order_lead_time}}分钟</span>
+                  </p>
+                </section>
+              </header>
+              <!-- 评价tag -->
+              <ul class="tag_list_ul">
+                <li
+                  v-for="(item,index) in ratingTagsList"
+                  :key="index"
+                  :class="{unsatisfied:item.unsatisfied,tagActivity:ratingTageIndex==index}"
+                  @click="changeTgeIndex(index,item.name)"
+                >{{item.name}}({{item.count}})</li>
+              </ul>
+              <!-- 评价列表 -->
+              <ul class="rating_list_ul">
+                <li v-for="(item,index) in ratingList" :key="index" class="rating_list_li">
+                  <img :src="getImgPath(item.avatar)" class="user_avatar" alt />
+                  <section class="rating_list_details">
+                    <header>
+                      <section class="username_star">
+                        <p class="username">{{item.username}}</p>
+                        <p class="star_desc">
+                          <rating-star :rating="item.rating_star"></rating-star>
+                          <span class="time_spent_desc">{{item.time_spent_desc}}</span>
+                        </p>
+                      </section>
+                      <time class="rated_at">{{item.rated_at}}</time>
+                    </header>
+                    <ul class="food_img_ul">
+                      <li v-for="(item,index) in item.item_ratings" :key="index">
+                        <img :src="getImgPath(item.image_hash)" v-if="item.image_hash"/>
+                      </li>
+                    </ul>
+                    <ul class="food_name_ul">
+                      <li
+                        class="ellipsis"
+                        v-for="(item,index) in item.item_ratings"
+                        :key="index"
+                      >{{item.food_name}}</li>
+                    </ul>
+                  </section>
+                </li>
+              </ul>
+            </section>
+          </section>
+        </section>
+      </transition>
     </section>
     <!-- 选规格弹窗 -->
     <section class="specs_container">
@@ -333,6 +417,7 @@ import toast from "../../components/toast";
 import ratingStar from "../../components/common/ratingStar";
 import buyCart from "../../components/common/buyCart";
 import { imgBaseUrl } from "../../config/env";
+import BScroll from "better-scroll";
 export default {
   data() {
     return {
@@ -363,6 +448,8 @@ export default {
       ratingTagName: "", //评论的类型
       loadRatings: false, //加载更多评论是显示加载组件
 
+      is_scroll: false,
+      is_fixed: false,
       foodScroll: null, //食品列表scroll
       showSpecs: false, //控制显示食品规格
       specsIndex: 0, //当前选中的规格索引值
@@ -372,6 +459,7 @@ export default {
       windowHeight: null, //屏幕高度
       elLeft: 0, //当前点击加按钮在网页中的绝对left值
       elBottom: 0, //当前点击加按钮在网页中的绝对bottom值
+      ratingScroll: null, //评论页Scroll
 
       imgBaseUrl
     };
@@ -442,33 +530,106 @@ export default {
     }
   },
 
-  created() {},
+  created() {
+    this.INIT_BUYCART();
+  },
 
   mounted() {
     this.initData();
+    // this.bindScroll();
   },
 
   methods: {
-    ...mapMutations(["ADD_CART", "REDUCE_CART"]),
+    ...mapMutations([
+      "RECORD_SHOPDETAIL",
+      "ADD_CART",
+      "REDUCE_CART",
+      "INIT_BUYCART",
+      "CLEAR_CART"
+    ]),
 
     async initData() {
       this.shopDetailData = await getShopDetails(this.shopId); // 获取商铺信息
       this.menuList = await getFoodMenu(this.shopId); //获取商铺食品列表
+      this.ratingList = await getRatingList(this.shopId, this.ratingOffset); //评论列表
+      this.ratingScoresData = await getRatingScores(this.shopId); //商铺评论详情
+      this.ratingTagsList = await getRatingTags(this.shopId); //评论Tag列表
+      this.RECORD_SHOPDETAIL(this.shopDetailData);
       this.hideLoading();
+    },
+
+    bindScroll() {
+      this.$nextTick(() => {
+        let topHeight = this.$refs.shopHeader.offsetHeight;
+        console.log(topHeight);
+        if (!this.is_scroll) {
+          this.is_scroll = true;
+          this.scrollinstance = () => {
+            let scrollTop =
+              document.documentElement.scrollTop === 0
+                ? document.body.scrollTop
+                : document.documentElement.scrollTop;
+            this.is_fixed = scrollTop >= topHeight ? true : false;
+          };
+          window.addEventListener("scroll", this.scrollinstance.false);
+          this.touchinstance = () => {
+            let scrollTop =
+              document.documentElement.scrollTop === 0
+                ? document.body.scrollTop
+                : document.documentElement.scrollTop;
+            this.is_fixed = scrollTop >= topHeight ? true : false;
+          };
+          window.addEventListener("touchmove", this.touchinstance.false);
+        }
+      });
     },
 
     //获取食品列表的高度，存入shopListTop
     getFoodListHeight() {
       const listContainer = this.$refs.menuFoodList;
-      console.log(listContainer)
       if (listContainer) {
         const listArr = Array.from(listContainer.children[0].children);
-        console.log(listArr)
         listArr.forEach((item, index) => {
           this.shopListTop[index] = item.offsetTop;
         });
-        // this.listenScroll(listContainer)
+        this.listenScroll(listContainer);
       }
+    },
+
+    // 当滑动食品列表时，监听器ScrollTop值来设置对应的食品列表标题的样式
+    listenScroll(element) {
+      this.foodScroll = new BScroll(element, {
+        probeType: 3, //当 probeType 为 3 的时候，不仅在屏幕滑动的过程中，而且在 momentum 滚动动画运行过程中实时派发 scroll 事件
+        deceleration: 0.001,
+        bounce: false,
+        swipeTime: 2000,
+        click: true
+      });
+      const wrapperMenu = new BScroll("#wrapper_menu", {
+        click: true
+      });
+      const wrapMenuHeight = this.$refs.wrapperMenu.clientHeight;
+      console.log(this.$refs.wrapperMenu);
+      this.foodScroll.on("scroll", pos => {
+        if (!this.$refs.wrapperMenu) {
+          return;
+        }
+        this.shopListTop.forEach((item, index) => {
+          if (this.menuIndexChange && Math.abs(Math.round(pos.y)) >= item) {
+            this.menuIndex = index;
+            const menuList = this.$refs.wrapperMenu.querySelectorAll(
+              ".activity_menu"
+            );
+            const el = menuList[0];
+            wrapperMenu.scrollToElement(el, 800, 0, -(wrapMenuHeight / 2 - 50));
+          }
+        });
+      });
+    },
+
+    // 控制活动详情页的显示隐藏
+    showActivitiesFun(){
+      this.showActivities=!this.showActivities;
     },
 
     // 点击左侧食品列表标题，相应列表移动到最顶层
@@ -567,7 +728,20 @@ export default {
         : true;
     },
 
-    clearCart() {},
+    // 清除购物车
+    clearCart() {
+      this.toggleCartList();
+      this.CLEAR_CART(this.shopId);
+    },
+
+    // 获取不同类型的评论列表
+    async changeTgeIndex(index, name) {
+      this.ratingTageIndex = index;
+      this.ratingOffset = 0;
+      this.ratingTagName = name;
+      let res = await getRatingList(this.shopId, name, this.ratingOffset);
+      this.ratingList = [...res];
+    },
 
     //隐藏动画
     hideLoading() {
@@ -631,6 +805,11 @@ export default {
       this.elLeft = elLeft;
       this.elBottom = elBottom;
     }
+  },
+
+  destroyed() {
+    window.removeEventListener("scroll", this.scrollinstance);
+    window.removeEventListener("touchmove", this.touchinstance);
   }
 };
 </script>
@@ -640,6 +819,7 @@ export default {
   @include wh(100%, 100%);
 }
 .shop_container {
+  // width: 100%;
   @include wh(100%, 100%);
   .goback {
     position: fixed;
@@ -700,6 +880,32 @@ export default {
           @include ct;
           right: 14px;
           z-index: 11;
+        }
+      }
+      .description_footer{
+        @include fj;
+        margin-top: 24px;
+        padding-right: 48px;
+        p{
+          @include sc(24px,#fff);
+          span{
+            color:#fff;
+          }
+          .tip_icon{
+            padding: 0 2px;
+            border: 1px solid #fff;
+            border-radius: 5px;
+            font-size: 18px;
+            display: inline-block;
+          }
+        }
+        .ellipsis{
+          width: 84%;
+        }
+        .footer_arrow{
+          @include wh(21px,21px);
+          position: absolute;
+          right: 14px;
         }
       }
     }
@@ -781,366 +987,523 @@ export default {
       }
     }
   }
+  .fixed_tab {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
   .food_container {
     display: flex;
     padding-bottom: 94px;
     height: 100%;
-  }
-  .menu_container {
-    height: 100%;
-    display: flex;
-    flex: 1;
-    overflow-y: hidden;
-    position: relative;
-    .menu_left {
-      width: 178px;
-      .menu_left_li {
-        padding: 32px 14px;
-        border-bottom: 1px solid #ededed;
-        box-sizing: border-box;
-        border-left: 2px solid #f8f8f8;
-        position: relative;
-        img {
-          @include wh(23px, 28px);
+    .menu_container {
+      height: 100%;
+      display: flex;
+      flex: 1;
+      overflow-y: hidden;
+      position: relative;
+      .menu_left {
+        width: 178px;
+        .menu_left_li {
+          padding: 32px 14px;
+          border-bottom: 1px solid #ededed;
+          box-sizing: border-box;
+          border-left: 2px solid #f8f8f8;
+          position: relative;
+          img {
+            @include wh(23px, 28px);
+          }
+          span {
+            @include sc(28px, #666);
+          }
+          .category_num {
+            display: inline-block;
+            position: absolute;
+            top: 8px;
+            right: 4px;
+            background-color: #ff461d;
+            line-height: 28px;
+            text-align: center;
+            border-radius: 50%;
+            border: 1px solid #ff461d;
+            min-width: 28px;
+            height: 28px;
+            @include sc(24px, #fff);
+          }
         }
-        span {
-          @include sc(28px, #666);
+        .activity_menu {
+          border-left: 6px solid #3190e8;
+          background-color: #fff;
+          span:nth-of-type(1) {
+            font-weight: bold;
+          }
         }
-        .category_num {
-          display: inline-block;
-          position: absolute;
-          top: 8px;
-          right: 4px;
-          background-color: #ff461d;
-          line-height: 28px;
-          text-align: center;
-          border-radius: 50%;
-          border: 1px solid #ff461d;
-          min-width: 28px;
-          height: 28px;
-          @include sc(24px, #fff);
+      }
+      .menu_right {
+        flex: 4;
+        overflow-y: auto;
+        .menu_detail_header {
+          width: 100%;
+          padding: 18px;
+          position: relative;
+          @include fj;
+          align-items: center;
+          .menu_detail_header_left {
+            width: 515px;
+            white-space: nowrap;
+            overflow: hidden;
+            .menu_item_title {
+              @include sc(32px, #666);
+              font-weight: bold;
+            }
+            .menu_item_description {
+              @include sc(24px, #999);
+              width: 30%;
+              overflow: hidden;
+            }
+          }
+          .menu_detail_header_right {
+            @include wh(24px, 47px);
+            display: block;
+            @include bis("~../../images/icon_point.png");
+            background-size: 100% 18px;
+            background-position: left center;
+          }
+          .description_tip {
+            background-color: #39373a;
+            opacity: 0.95;
+            @include sc(24px, #fff);
+            position: absolute;
+            top: 70px;
+            right: 9px;
+            z-index: 14;
+            width: 375px;
+            padding: 24px 18px;
+            border: 1px; /*no*/
+            border-radius: 9px;
+            span {
+              color: #fff;
+              line-height: 28px;
+              font-size: 26px;
+            }
+            &::after {
+              content: "";
+              position: absolute;
+              @include wh(18px, 18px);
+              background-color: #39373a;
+              top: -20px;
+              right: 32px;
+              transform: rotate(-45deg) translateY(16px);
+            }
+          }
+        }
+        .menu_detail_list {
+          background-color: #fff;
+          padding: 28px 18px;
+          border-bottom: 1px solid #f8f8f8; /*no*/
+          position: relative;
+          overflow: hidden;
+          .mennu_detail_link {
+            display: flex;
+            .menu_food_img {
+              margin-right: 18px;
+              img {
+                @include wh(94px, 94px);
+                display: inline-block;
+                flex-shrink: 0;
+              }
+            }
+            .menu_food_description {
+              width: 100%;
+              .food_description_head {
+                @include fj;
+                margin-bottom: 9px;
+                .description_foodname {
+                  @include sc(32px, #333);
+                }
+                .attributes_ul {
+                  display: flex;
+                  li {
+                    font-size: 14px;
+                    height: 24px;
+                    line-height: 16px;
+                    padding: 4px;
+                    border: 1px solid #666;
+                    border-radius: 14px;
+                    margin-right: 4px;
+                    transform: scale(0.8);
+                    p {
+                      white-space: nowrap;
+                    }
+                  }
+                  .attribute_new {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    background-color: #4cd964;
+                    @include wh(94px, 94px);
+                    display: flex;
+                    align-items: flex-end;
+                    transform: rotate(-45deg) translate(-4px, -70px);
+                    border: none;
+                    border-radius: 0;
+                    p {
+                      @include sc(18px, #fff);
+                      text-align: center;
+                      flex: 1;
+                      transform: scale(0.8) translate(4px, -4px);
+                    }
+                  }
+                }
+              }
+              .food_description_content {
+                @include sc(24px, #999);
+                line-height: 28px;
+              }
+              .food_description_sale_rating {
+                line-height: 38px;
+                span {
+                  @include sc(23px, #333);
+                }
+              }
+              .food_activity {
+                line-height: 18px;
+                span {
+                  font-size: 14px;
+                  border: 1px solid currentColor;
+                  border-radius: 14px;
+                  padding: 3px;
+                  display: inline-block;
+                  transform: scale(0.8);
+                  margin-left: -16px;
+                }
+              }
+            }
+          }
+          .menu_detail_footer {
+            margin-left: 112px;
+            font-size: 0;
+            margin-top: 14px;
+            @include fj;
+            .food_price {
+              span:nth-of-type(1) {
+                @include sc(24px, #f60);
+                margin-right: 2px;
+              }
+              span:nth-of-type(2) {
+                @include sc(32px, #f60);
+                margin-right: 14px;
+                font-weight: bold;
+              }
+              span:nth-of-type(3) {
+                @include sc(24px, #666);
+              }
+            }
+          }
         }
       }
     }
-    .menu_right {
-      flex: 4;
-      overflow-y: auto;
-      .menu_detail_header {
-        width: 100%;
-        padding: 18px;
-        position: relative;
-        @include fj;
-        align-items: center;
-        .menu_detail_header_left {
-          width: 515px;
-          white-space: nowrap;
-          overflow: hidden;
-          .menu_item_title {
-            @include sc(32px, #666);
-            font-weight: bold;
-          }
-          .menu_item_description {
-            @include sc(24px, #999);
-            width: 30%;
-            overflow: hidden;
-          }
-        }
-        .menu_detail_header_right {
-          @include wh(24px, 47px);
-          display: block;
-          @include bis("~../../images/icon_point.png");
-          background-size: 100% 18px;
-          background-position: left center;
-        }
-        .description_tip {
-          background-color: #39373a;
-          opacity: 0.95;
-          @include sc(24px, #fff);
+    .buy_cart_container {
+      position: fixed;
+      background-color: #3d3d3f;
+      bottom: 0;
+      left: 0;
+      z-index: 13;
+      display: flex;
+      @include wh(100%, 94px);
+      .cart_icon_num {
+        flex: 1;
+        .cart_icon_container {
+          display: flex;
+          background-color: #3d3d3f;
           position: absolute;
-          top: 70px;
-          right: 9px;
-          z-index: 14;
-          width: 375px;
-          padding: 24px 18px;
-          border: 1px; /*no*/
-          border-radius: 9px;
-          span {
-            color: #fff;
-            line-height: 28px;
-            font-size: 26px;
-          }
-          &::after {
-            content: "";
+          padding: 18px;
+          border: 8px solid #444;
+          border-radius: 50%;
+          left: 23px;
+          top: -32px;
+          .cart_list_length {
             position: absolute;
-            @include wh(18px, 18px);
-            background-color: #39373a;
-            top: -20px;
-            right: 32px;
-            transform: rotate(-45deg) translateY(16px);
+            top: -12px;
+            right: -12px;
+            background-color: #ff461d;
+            line-height: 32px;
+            text-align: center;
+            border-radius: 50%;
+            border: 1px solid #ff461d; /*no*/
+            min-width: 32px;
+            height: 32px;
+            @include sc(24px, #fff);
+          }
+          .cart_icon {
+            @include wh(56px, 56px);
+          }
+        }
+        .cart_icon_activity {
+          background-color: #3190e8;
+        }
+        .cart_num {
+          @include ct;
+          left: 164px;
+          div {
+            color: #fff;
+          }
+          div:nth-of-type(1) {
+            font-size: 37.5px;
+            font-weight: bold;
+            margin-bottom: 4px;
+          }
+          div:nth-of-type(2) {
+            font-size: 18px;
           }
         }
       }
-      .menu_detail_list {
-        background-color: #fff;
-        padding: 28px 18px;
-        border-bottom: 1px solid #f8f8f8; /*no*/
-        position: relative;
-        overflow: hidden;
-        .mennu_detail_link {
-          display: flex;
-          .menu_food_img {
-            margin-right: 18px;
-            img {
-              @include wh(94px, 94px);
-              display: inline-block;
-              flex-shrink: 0;
-            }
-          }
-          .menu_food_description {
-            width: 100%;
-            .food_description_head {
-              @include fj;
-              margin-bottom: 9px;
-              .description_foodname {
-                @include sc(32px, #333);
-              }
-              .attributes_ul {
-                display: flex;
-                li {
-                  font-size: 14px;
-                  height: 24px;
-                  line-height: 16px;
-                  padding: 4px;
-                  border: 1px solid #666;
-                  border-radius: 14px;
-                  margin-right: 4px;
-                  transform: scale(0.8);
-                  p {
-                    white-space: nowrap;
-                  }
-                }
-                .attribute_new {
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  background-color: #4cd964;
-                  @include wh(94px, 94px);
-                  display: flex;
-                  align-items: flex-end;
-                  transform: rotate(-45deg) translate(-4px, -70px);
-                  border: none;
-                  border-radius: 0;
-                  p {
-                    @include sc(18px, #fff);
-                    text-align: center;
-                    flex: 1;
-                    transform: scale(0.8) translate(4px, -4px);
-                  }
-                }
-              }
-            }
-            .food_description_content {
-              @include sc(24px, #999);
-              line-height: 28px;
-            }
-            .food_description_sale_rating {
-              line-height: 38px;
-              span {
-                @include sc(23px, #333);
-              }
-            }
-            .food_activity {
-              line-height: 18px;
-              span {
-                font-size: 14px;
-                border: 1px solid currentColor;
-                border-radius: 14px;
-                padding: 3px;
-                display: inline-block;
-                transform: scale(0.8);
-                margin-left: -16px;
-              }
-            }
-          }
+      .gotopay {
+        @include wh(234px, 100%);
+        background-color: #535356;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .gotopay_button_style {
+          @include sc(33px, #fff);
+          font-weight: bold;
         }
-        .menu_detail_footer {
-          margin-left: 112px;
-          font-size: 0;
-          margin-top: 14px;
+      }
+      .gotopay_acitvity {
+        background-color: #4cd964;
+      }
+    }
+    .cart_food_list {
+      position: fixed;
+      width: 100%;
+      padding-bottom: 94px;
+      z-index: 12;
+      bottom: 0;
+      left: 0;
+      background-color: #fff;
+      header {
+        @include fj;
+        align-items: center;
+        padding: 14px 28px;
+        background-color: #fff;
+        svg {
+          @include wh(28px, 28px);
+          vertical-align: middle;
+        }
+        h4 {
+          @include sc(32px, #666);
+        }
+        .clear_cart {
+          @include sc(28px, #666);
+        }
+      }
+      .cart_food_details {
+        background-color: #fff;
+        max-height: 938px;
+        overflow: auto;
+        .cart_food_li {
           @include fj;
-          .food_price {
+          padding: 28px 24px;
+          .cart_list_num {
+            width: 55%;
+            p:nth-of-type(1) {
+              @include sc(32px, #666);
+              font-weight: bold;
+            }
+            p:nth-of-type(2) {
+              @include sc(18px, #666);
+            }
+          }
+          .cart_list_price {
+            font-size: 0;
             span:nth-of-type(1) {
-              @include sc(24px, #f60);
-              margin-right: 2px;
+              @include sc(26px, #f60);
             }
             span:nth-of-type(2) {
               @include sc(32px, #f60);
-              margin-right: 14px;
               font-weight: bold;
             }
-            span:nth-of-type(3) {
-              @include sc(24px, #666);
+          }
+          .cart_list_control {
+            display: flex;
+            align-items: center;
+            span {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            svg {
+              @include wh(42px, 42px);
+              fill: #3190e8;
+            }
+            .specs_reduce_icon {
+              fill: #999;
+            }
+            .cart_num {
+              @include sc(30px, #666);
+              min-width: 47px;
+              text-align: center;
+            }
+          }
+        }
+      }
+    }
+    .screen_cover {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.3);
+      z-index: 11;
+    }
+  }
+  .rating_container {
+    flex: 1;
+    overflow-y: hidden;
+    flex-direction: column;
+    .rating_header {
+      display: flex;
+      background-color: #fff;
+      padding: 37px 24px;
+      margin-bottom: 24px;
+      .rating_header_left {
+        flex: 3;
+        text-align: center;
+        p:nth-of-type(1) {
+          @include sc(56px, #f60);
+        }
+        p:nth-of-type(2) {
+          @include sc(30px, #666);
+          margin-bottom: 5px;
+        }
+        p:nth-of-type(3) {
+          @include sc(18px, #999);
+        }
+      }
+      .rating_header_right {
+        flex: 4;
+        p {
+          font-size: 30px;
+          line-height: 1rem;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          span:nth-of-type(1) {
+            color: #666;
+            margin-right: 24px;
+          }
+          .rating_star {
+            margin-top: -15px;
+          }
+          .rating_num {
+            width: 140px;
+            @include sc(26px, #f60);
+          }
+          .delivery_time {
+            @include sc(18px, #999);
+          }
+        }
+      }
+    }
+    .tag_list_ul {
+      display: flex;
+      flex-wrap: wrap;
+      background-color: #fff;
+      padding: 0.5rem;
+      li {
+        @include sc(28px, #6d7885);
+        padding: 14px;
+        background-color: #ebf5ff;
+        border-radius: 9px;
+        border: 1px; /*no*/
+        margin: 0 18px 9px 0;
+      }
+      .unsatisfied {
+        background-color: #f5f5f5;
+        color: #aaa;
+      }
+      .tagActivity {
+        background: #3190e8;
+        color: #fff;
+      }
+    }
+    .rating_list_ul {
+      background-color: #fff;
+      padding: 0 24px;
+      .rating_list_li {
+        border-top: 1px solid #f1f1f1; /*no*/
+        display: flex;
+        padding: 28px 0;
+        .user_avatar {
+          display: inline-block;
+          @include wh(70px, 70px);
+          border: 1px; /*no*/
+          border-radius: 50%;
+          margin-right: 38px;
+          flex-shrink: 0;
+        }
+        .rating_list_details {
+          flex: 1;
+          header {
+            display: flex;
+            flex: 1;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            .username_star {
+              @include sc(26px, #666);
+              .username {
+                color: #666;
+                margin-bottom: 9px;
+              }
+              .star_desc {
+                display: flex;
+                align-items: center;
+                .time_spent_desc {
+                  @include sc(26px, #666);
+                  margin-left: 7px;
+                }
+              }
+            }
+            .rated_at {
+              @include sc(18px, #999);
+            }
+          }
+          .food_img_ul {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            li {
+              img {
+                display: inline-block;
+                @include wh(140px, 140px);
+                margin-right: 18px;
+                display: block;
+              }
+            }
+          }
+          .food_name_ul {
+            display: flex;
+            flex-wrap: wrap;
+            li {
+              @include sc(26px, #999);
+              width: 102px;
+              padding: 9px;
+              border: 1px solid #ebebeb; /*no*/
+              border-radius: 7px;
+              margin-right: 14px;
+              margin-bottom: 4px;
             }
           }
         }
       }
     }
   }
-  .buy_cart_container {
-    position: fixed;
-    background-color: #3d3d3f;
-    bottom: 0;
-    left: 0;
-    z-index: 13;
-    display: flex;
-    @include wh(100%, 94px);
-    .cart_icon_num {
-      flex: 1;
-      .cart_icon_container {
-        display: flex;
-        background-color: #3d3d3f;
-        position: absolute;
-        padding: 18px;
-        border: 8px solid #444;
-        border-radius: 50%;
-        left: 23px;
-        top: -32px;
-        .cart_list_length {
-          position: absolute;
-          top: -12px;
-          right: -12px;
-          background-color: #ff461d;
-          line-height: 32px;
-          text-align: center;
-          border-radius: 50%;
-          border: 1px solid #ff461d; /*no*/
-          min-width: 32px;
-          height: 32px;
-          @include sc(24px, #fff);
-        }
-        .cart_icon {
-          @include wh(56px, 56px);
-        }
-      }
-      .cart_icon_activity {
-        background-color: #3190e8;
-      }
-      .cart_num {
-        @include ct;
-        left: 164px;
-        div {
-          color: #fff;
-        }
-        div:nth-of-type(1) {
-          font-size: 37.5px;
-          font-weight: bold;
-          margin-bottom: 4px;
-        }
-        div:nth-of-type(2) {
-          font-size: 18px;
-        }
-      }
-    }
-    .gotopay {
-      @include wh(234px, 100%);
-      background-color: #535356;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      .gotopay_button_style {
-        @include sc(33px, #fff);
-        font-weight: bold;
-      }
-    }
-    .gotopay_acitvity {
-      background-color: #4cd964;
-    }
-  }
-  .cart_food_list {
-    position: fixed;
-    width: 100%;
-    padding-bottom: 94px;
-    z-index: 12;
-    bottom: 0;
-    left: 0;
-    background-color: #fff;
-    header {
-      @include fj;
-      align-items: center;
-      padding: 14px 28px;
-      background-color: #fff;
-      svg {
-        @include wh(28px, 28px);
-        vertical-align: middle;
-      }
-      h4 {
-        @include sc(32px, #666);
-      }
-      .clear_cart {
-        @include sc(28px, #666);
-      }
-    }
-    .cart_food_details {
-      background-color: #fff;
-      max-height: 938px;
-      overflow: auto;
-      .cart_food_li {
-        @include fj;
-        padding: 28px 24px;
-        .cart_list_num {
-          width: 55%;
-          p:nth-of-type(1) {
-            @include sc(32px, #666);
-            font-weight: bold;
-          }
-          p:nth-of-type(2) {
-            @include sc(18px, #666);
-          }
-        }
-        .cart_list_price {
-          font-size: 0;
-          span:nth-of-type(1) {
-            @include sc(26px, #f60);
-          }
-          span:nth-of-type(2) {
-            @include sc(32px, #f60);
-            font-weight: bold;
-          }
-        }
-        .cart_list_control {
-          display: flex;
-          align-items: center;
-          span {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          svg {
-            @include wh(42px, 42px);
-            fill: #3190e8;
-          }
-          .specs_reduce_icon {
-            fill: #999;
-          }
-          .cart_num {
-            @include sc(30px, #666);
-            min-width: 47px;
-            text-align: center;
-          }
-        }
-      }
-    }
-  }
-  .screen_cover {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0, 0, 0, 0.3);
-    z-index: 11;
-  }
+}
+.shop_container_fixed {
+  height: 100%;
 }
 .specs_container {
   .specs_cover {

@@ -41,6 +41,11 @@ export default {
     state.latitude = latitude;
     state.longitude = longitude;
   },
+
+  [RECORD_SHOPDETAIL](state,detail){
+    state.shopDetail=detail;
+  },
+
   // 加入购物车
   [ADD_CART](state, {
     shopid,
@@ -90,39 +95,54 @@ export default {
     let cart = state.cartList;
     let shop = (cart[shopid] || {});
     let category = (shop[category_id] || {});
-    let item =(category[item_id] || {});
-    if(item && item[food_id]){
-      if(item[food_id]['num']>0){
+    let item = (category[item_id] || {});
+    if (item && item[food_id]) {
+      if (item[food_id]['num'] > 0) {
         item[food_id]['num']--;
-        state.cartList={...cart};
+        state.cartList = { ...cart };
         // 存入localStorage
-        setStore('buyCart',state.cartList);
-      }else{
+        setStore('buyCart', state.cartList);
+      } else {
         // 商品数量为0，则清空当前商品的信息
-        item[food_id]=null;
+        item[food_id] = null;
       }
     }
   },
 
+  // 网页初始化时从本地缓存获取购物车数据
+  [INIT_BUYCART](state) {
+    let initCart = getStore('buyCart');
+    if (initCart) {
+      state.cartList = JSON.parse(initCart);
+    }
+  },
+
+  //清空当前商品的购物车信息
+  [CLEAR_CART](state, shopid) {
+    state.cartList[shopid] = null;
+    state.cartList = { ...state.cartList };
+    setStore('buyCart', state.cartList)
+  },
+
   //记录用户信息
-  [RECORD_USERINFO](state,info){
-    state.userInfo=info;
-    state.login=true;
-    setStore('user_id',info.user_id);
+  [RECORD_USERINFO](state, info) {
+    state.userInfo = info;
+    state.login = true;
+    setStore('user_id', info.user_id);
   },
 
   // 获取用户信息存入vuex
-  [GET_USERINFO](state,info){
-    if(!info.message){
-      state.userInfo={...info}
-    }else{
-      state.userInfo=null;
+  [GET_USERINFO](state, info) {
+    if (!info.message) {
+      state.userInfo = { ...info }
+    } else {
+      state.userInfo = null;
     }
   },
 
   //修改用户名
-  [RETSET_NAME](state,username){
-    state.userInfo=Object.assign({},state.userInfo,{username})
+  [RETSET_NAME](state, username) {
+    state.userInfo = Object.assign({}, state.userInfo, { username })
   },
 
   // 保存geohash

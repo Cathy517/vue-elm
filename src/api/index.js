@@ -137,6 +137,7 @@ export function getRatingList(restaurant_id,tag_name,offset,limit){
     method:'get',
     url:`/api/ugc/v2/restaurants/${restaurant_id}/ratings`,
     params:{
+      has_content:true,
       tag_name,
       offset,
       limit:10
