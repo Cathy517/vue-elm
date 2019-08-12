@@ -14,7 +14,7 @@
       <header class="shop_detail_header" ref="shopHeader" :style="{zIndex:showActivities?'14':'10'}">
         <img :src="imgBaseUrl+shopDetailData.image_path" class="header_cover_img" alt />
         <section class="description_header">
-          <router-link to="shop/shopDeatil" class="description_top">
+          <router-link to="/shop/shopDetail" class="description_top">
             <section class="description_left">
               <img :src="imgBaseUrl+shopDetailData.image_path" alt />
             </section>
@@ -399,6 +399,14 @@
     <transition name="fade">
       <p class="show_delete_tip" v-if="showDeleteTip">多规格商品只能去购物车删除哦</p>
     </transition>
+
+    <loading v-show="showLoading || loadRatings"></loading>
+    <section class="animation_opactiy shop_back_svg_container" v-if="showLoading">
+        <img src="../../images/shop_back_svg.svg">
+    </section>
+    <transition name="router-slid" mode="out-in">
+      <router-view></router-view>
+    </transition>
   </div>
 </template>
 
@@ -414,6 +422,7 @@ import {
 } from "../../api/index";
 import { loadMore, getImgPath } from "../../components/common/mixin";
 import toast from "../../components/toast";
+import loading from "../../components/common/loading";
 import ratingStar from "../../components/common/ratingStar";
 import buyCart from "../../components/common/buyCart";
 import { imgBaseUrl } from "../../config/env";
@@ -421,9 +430,8 @@ import BScroll from "better-scroll";
 export default {
   data() {
     return {
-      imgBaseUrl,
-      geohash: this.$route.query.geohash || "", //geohash
-      shopId: this.$route.query.id || null, //商店id
+      geohash: "", //geohash
+      shopId: null, //商店id
       showLoading: true, //显示加载动画
       changeShowType: "food", //切换显示商品或评价
       shopDetailData: null, //商铺详情
@@ -465,7 +473,7 @@ export default {
     };
   },
 
-  components: { ratingStar, buyCart },
+  components: { loading,ratingStar, buyCart },
   mixins: [loadMore, getImgPath],
   computed: {
     ...mapState(["latitude", "longitude", "cartList"]),
@@ -531,6 +539,8 @@ export default {
   },
 
   created() {
+    this.geohash=this.$route.query.geohash; //geohash
+    this.shopId= this.$route.query.id;
     this.INIT_BUYCART();
   },
 
@@ -817,7 +827,15 @@ export default {
 @import "../../style/mixin";
 .shop_wrap {
   @include wh(100%, 100%);
+  .shop_back_svg_container{
+    position: fixed;
+    @include wh(100%,100%);
+    img{
+      @include wh(100%,100%);
+    }
+  }
 }
+
 .shop_container {
   // width: 100%;
   @include wh(100%, 100%);

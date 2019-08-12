@@ -55,6 +55,7 @@ export default {
   left: 50%;
   transform: translate(-50%,-50%);
   @include wh(118px,118px);
+  z-index: 2;
   .load_img{
     @include wh(100%,100%);
     background: url('~../../images/icon_loading.png') no-repeat 0 0;
