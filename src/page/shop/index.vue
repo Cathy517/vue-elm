@@ -1,7 +1,11 @@
 <template>
   <div class="shop_wrap">
     <!-- 商品内容和评价 -->
-    <section v-if="!showLoading" class="shop_container" :class="{shop_container_fixed:is_fixed}">
+    <section
+      v-if="!showLoading&&showShop"
+      class="shop_container"
+      :class="{shop_container_fixed:is_fixed}"
+    >
       <nav class="goback">
         <svg width="4rem" height="100%" xmlns="http://www.w3.org/2000/svg" version="1.1">
           <polyline
@@ -11,7 +15,11 @@
         </svg>
       </nav>
       <!-- 商家顶部信息 -->
-      <header class="shop_detail_header" ref="shopHeader" :style="{zIndex:showActivities?'14':'10'}">
+      <header
+        class="shop_detail_header"
+        ref="shopHeader"
+        :style="{zIndex:showActivities?'14':'10'}"
+      >
         <img :src="imgBaseUrl+shopDetailData.image_path" class="header_cover_img" alt />
         <section class="description_header">
           <router-link to="/shop/shopDetail" class="description_top">
@@ -35,14 +43,21 @@
               <path d="M0 0 L8 7 L0 14" stroke="#fff" stroke-width="1" fill="none" />
             </svg>
           </router-link>
-          <footer class="description_footer" v-if="shopDetailData.activities.length" @click="showActivitiesFun">
+          <footer
+            class="description_footer"
+            v-if="shopDetailData.activities.length"
+            @click="showActivitiesFun"
+          >
             <p class="ellipsis">
-              <span class="tip_icon" :style="{backgroundColor: '#' + shopDetailData.activities[0].icon_color, borderColor: '#' + shopDetailData.activities[0].icon_color}">{{shopDetailData.activities[0].icon_name}}</span>
+              <span
+                class="tip_icon"
+                :style="{backgroundColor: '#' + shopDetailData.activities[0].icon_color, borderColor: '#' + shopDetailData.activities[0].icon_color}"
+              >{{shopDetailData.activities[0].icon_name}}</span>
               <span>{{shopDetailData.activities[0].description}}(App专享)</span>
             </p>
             <p>{{shopDetailData.activities.length}}个活动</p>
             <svg class="footer_arrow">
-                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#arrow-left"></use>
+              <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#arrow-left" />
             </svg>
           </footer>
         </section>
@@ -333,7 +348,7 @@
                     </header>
                     <ul class="food_img_ul">
                       <li v-for="(item,index) in item.item_ratings" :key="index">
-                        <img :src="getImgPath(item.image_hash)" v-if="item.image_hash"/>
+                        <img :src="getImgPath(item.image_hash)" v-if="item.image_hash" />
                       </li>
                     </ul>
                     <ul class="food_name_ul">
@@ -352,7 +367,7 @@
       </transition>
     </section>
     <!-- 选规格弹窗 -->
-    <section class="specs_container">
+    <section class="specs_container" v-if="showSpecs">
       <transition name="fade">
         <div class="specs_cover" @click="showChooseList" v-if="showSpecs"></div>
       </transition>
@@ -402,7 +417,7 @@
 
     <loading v-show="showLoading || loadRatings"></loading>
     <section class="animation_opactiy shop_back_svg_container" v-if="showLoading">
-        <img src="../../images/shop_back_svg.svg">
+      <img src="../../images/shop_back_svg.svg" />
     </section>
     <transition name="router-slid" mode="out-in">
       <router-view></router-view>
@@ -468,12 +483,12 @@ export default {
       elLeft: 0, //当前点击加按钮在网页中的绝对left值
       elBottom: 0, //当前点击加按钮在网页中的绝对bottom值
       ratingScroll: null, //评论页Scroll
-
+      showShop: true,
       imgBaseUrl
     };
   },
 
-  components: { loading,ratingStar, buyCart },
+  components: { loading, ratingStar, buyCart },
   mixins: [loadMore, getImgPath],
   computed: {
     ...mapState(["latitude", "longitude", "cartList"]),
@@ -535,12 +550,22 @@ export default {
       if (!value.length) {
         this.showCartList = false;
       }
+    },
+
+    // 根据路由变化控制商品显示隐藏
+    $route(now, old) {
+      console.log(now, old);
+      if (now.path == "/shop") {
+        this.showShop = true;
+      } else {
+        this.showShop = false;
+      }
     }
   },
 
   created() {
-    this.geohash=this.$route.query.geohash; //geohash
-    this.shopId= this.$route.query.id;
+    this.geohash = this.$route.query.geohash; //geohash
+    this.shopId = this.$route.query.id;
     this.INIT_BUYCART();
   },
 
@@ -638,8 +663,8 @@ export default {
     },
 
     // 控制活动详情页的显示隐藏
-    showActivitiesFun(){
-      this.showActivities=!this.showActivities;
+    showActivitiesFun() {
+      this.showActivities = !this.showActivities;
     },
 
     // 点击左侧食品列表标题，相应列表移动到最顶层
@@ -827,11 +852,11 @@ export default {
 @import "../../style/mixin";
 .shop_wrap {
   @include wh(100%, 100%);
-  .shop_back_svg_container{
+  .shop_back_svg_container {
     position: fixed;
-    @include wh(100%,100%);
-    img{
-      @include wh(100%,100%);
+    @include wh(100%, 100%);
+    img {
+      @include wh(100%, 100%);
     }
   }
 }
@@ -900,16 +925,16 @@ export default {
           z-index: 11;
         }
       }
-      .description_footer{
+      .description_footer {
         @include fj;
         margin-top: 24px;
         padding-right: 48px;
-        p{
-          @include sc(24px,#fff);
-          span{
-            color:#fff;
+        p {
+          @include sc(24px, #fff);
+          span {
+            color: #fff;
           }
-          .tip_icon{
+          .tip_icon {
             padding: 0 2px;
             border: 1px solid #fff;
             border-radius: 5px;
@@ -917,11 +942,11 @@ export default {
             display: inline-block;
           }
         }
-        .ellipsis{
+        .ellipsis {
           width: 84%;
         }
-        .footer_arrow{
-          @include wh(21px,21px);
+        .footer_arrow {
+          @include wh(21px, 21px);
           position: absolute;
           right: 14px;
         }
