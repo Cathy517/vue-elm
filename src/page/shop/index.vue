@@ -1649,4 +1649,14 @@ export default {
   border: 1px; /*no*/
   border-radius: 12px;
 }
+
+.router-slid-enter-active,
+.router-slid-leave-active {
+  transition: all 0.4s;
+}
+.router-slid-enter,
+.router-slid-leave-active {
+  transform: translate3d(2rem, 0, 0);
+  opacity: 0;
+}
 </style>
